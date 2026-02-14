@@ -7,6 +7,7 @@ import (
 	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/types"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -93,8 +94,18 @@ func (c *Client) subscribe(subject string, handler types.EventHandler, msgHandle
 		return fmt.Errorf("NATS client is closed")
 	}
 
+	cleanSubject := strings.ReplaceAll(subject, ".", "-")
+	cleanSubject = strings.ReplaceAll(cleanSubject, ">", "all")
+	cleanSubject = strings.ReplaceAll(cleanSubject, "*", "any")
+
+	consumerName := fmt.Sprintf("%s-%s", c.config.ConsumerName, cleanSubject)
+
+	if len(consumerName) > 64 {
+		consumerName = consumerName[:64]
+	}
+
 	consumerConfig := &nats.ConsumerConfig{
-		Durable:       c.config.ConsumerName,
+		Durable:       consumerName,
 		DeliverGroup:  c.config.ConsumerGroup,
 		AckWait:       c.config.AckWait,
 		MaxDeliver:    c.config.MaxDeliver,
@@ -107,9 +118,10 @@ func (c *Client) subscribe(subject string, handler types.EventHandler, msgHandle
 
 	_, err := c.jetStream.AddConsumer(c.config.StreamName, consumerConfig)
 	if err != nil {
-		if err == nats.ErrConsumerNameAlreadyInUse { // ✅ Правильно!
-			c.logger.Warn("consumer already exists, using existing",
-				zap.String("consumer", c.config.ConsumerName))
+		if err == nats.ErrConsumerNameAlreadyInUse {
+			c.logger.Debug("consumer already exists, using existing",
+				zap.String("consumer", consumerName),
+				zap.String("subject", subject))
 		} else {
 			return fmt.Errorf("failed to add consumer: %w", err)
 		}
@@ -117,25 +129,25 @@ func (c *Client) subscribe(subject string, handler types.EventHandler, msgHandle
 
 	sub, err := c.jetStream.PullSubscribe(
 		subject,
-		c.config.ConsumerName,
+		consumerName,
 		[]nats.SubOpt{
-			nats.Bind(c.config.StreamName, c.config.ConsumerName),
+			nats.Bind(c.config.StreamName, consumerName),
 			nats.ManualAck(),
 		}...,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create subscription: %w", err)
+		return fmt.Errorf("failed to create subscription for subject %s: %w", subject, err)
 	}
+
 	c.handlers[subject] = handler
 	c.subscriptions = append(c.subscriptions, sub)
 
-	// Запускаем обработку сообщений в отдельной горутине
 	c.wg.Add(1)
 	go c.processSubscription(sub, subject, msgHandler)
 
 	c.logger.Info("subscribed to subject",
 		zap.String("subject", subject),
-		zap.String("consumer", c.config.ConsumerName),
+		zap.String("consumer", consumerName),
 		zap.String("stream", c.config.StreamName))
 
 	return nil
@@ -144,7 +156,6 @@ func (c *Client) subscribe(subject string, handler types.EventHandler, msgHandle
 func (c *Client) processSubscription(sub *nats.Subscription, subject string, msgHandler func(*nats.Msg, types.EventHandler) error) {
 	defer c.wg.Done()
 
-	// Создаем тикер для пауз между итерациями
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -156,13 +167,11 @@ func (c *Client) processSubscription(sub *nats.Subscription, subject string, msg
 			return
 
 		case <-ticker.C:
-			// Получаем пакет сообщений с таймаутом
 			msgs, err := sub.Fetch(c.config.PullBatchSize, nats.MaxWait(5*time.Second))
 			if err != nil {
 				if err == nats.ErrTimeout {
 					continue
 				}
-				// Если нет сообщений или другие ошибки - логируем и продолжаем
 				if err.Error() != "nats: no messages" {
 					c.logger.Debug("fetch messages result",
 						zap.Error(err),
@@ -171,7 +180,6 @@ func (c *Client) processSubscription(sub *nats.Subscription, subject string, msg
 				continue
 			}
 
-			// Обрабатываем каждое сообщение
 			for _, msg := range msgs {
 				handler := c.getHandler(subject)
 				if handler == nil {
@@ -186,7 +194,6 @@ func (c *Client) processSubscription(sub *nats.Subscription, subject string, msg
 						zap.Error(err),
 						zap.String("subject", subject))
 
-					// Можно NAK сообщение для повторной обработки
 					if nakErr := msg.Nak(); nakErr != nil {
 						c.logger.Error("failed to nak message", zap.Error(nakErr))
 					}
