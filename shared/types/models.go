@@ -40,19 +40,19 @@ type MatchBundle struct {
 
 // TODO: Добавить информацию о лигах\турнирах
 type MatchMonitoring struct {
-	CorrelationID   int
-	SportType       SportType
-	TeamNames       []string
-	BookmakerBundle map[Bookmaker]string //match url
-	Bets            map[Bookmaker][]Bet
-	Timestamp       time.Time
+	CorrelationID   int                  `json:"correlation_id"`
+	SportType       SportType            `json:"sport_type"`
+	TeamNames       []string             `json:"team_names"`
+	BookmakerBundle map[Bookmaker]string `json:"bookmaker_bundle"`
+	Bets            map[Bookmaker][]Bet  `json:"bets"`
+	Timestamp       time.Time            `json:"timestamp"`
 }
 
 type Bet struct {
-	BetMarket MarketType
-	TargetBet string
-	Less      float64
-	More      float64
+	BetMarket MarketType `json:"bet_market"`
+	TargetBet string     `json:"target_bet"`
+	Less      float64    `json:"less"`
+	More      float64    `json:"more"`
 }
 
 type Fork struct {
