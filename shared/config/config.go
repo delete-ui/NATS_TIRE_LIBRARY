@@ -72,7 +72,7 @@ func DefaultConfig() *Config {
 }
 
 func LoadFromEnv() *Config {
-	cfg := c.DefaultConfig()
+	cfg := DefaultConfig()
 
 	if url := os.Getenv("NATS_URL"); url != "" {
 		cfg.NATSURL = url
