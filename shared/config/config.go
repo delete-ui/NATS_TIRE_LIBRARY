@@ -1,7 +1,7 @@
 package config
 
 import (
-	"NATS_TIRE_LIBRARY/shared/constants"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/constants"
 	"os"
 	"strconv"
 	"time"

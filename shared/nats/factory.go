@@ -1,9 +1,9 @@
 package nats
 
 import (
-	"NATS_TIRE_LIBRARY/shared/config"
-	"NATS_TIRE_LIBRARY/shared/types"
 	"fmt"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/config"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/types"
 )
 
 func Factory(cfg *config.Config) (types.Publisher, types.Consumer, error) {

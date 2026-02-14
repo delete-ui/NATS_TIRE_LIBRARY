@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"NATS_TIRE_LIBRARY/shared/types"
 	"encoding/json"
 	"fmt"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/types"
 	"github.com/google/uuid"
 	"time"
 )

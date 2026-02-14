@@ -1,10 +1,10 @@
 package nats
 
 import (
-	"NATS_TIRE_LIBRARY/shared/constants"
-	"NATS_TIRE_LIBRARY/shared/types"
 	"encoding/json"
 	"fmt"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/constants"
+	"github.com/delete-ui/NATS_TIRE_LIBRARY/shared/types"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 	"time"
