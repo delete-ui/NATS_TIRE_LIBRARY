@@ -44,12 +44,13 @@ type MatchMonitoring struct {
 	SportType       SportType
 	TeamNames       []string
 	BookmakerBundle map[Bookmaker]string //match url
-	Bets            map[Bookmaker]Bet
+	Bets            map[Bookmaker][]Bet
 	Timestamp       time.Time
 }
 
 type Bet struct {
 	BetMarket MarketType
+	TargetBet string
 	Less      float64
 	More      float64
 }
