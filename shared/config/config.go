@@ -45,7 +45,7 @@ type Config struct {
 	TLSCAFile   string
 }
 
-func DefaultConfig() *Config {
+func (c *Config) DefaultConfig() *Config {
 	return &Config{
 		NATSURL:        "nats://localhost:4222",
 		StreamName:     constants.StreamEvents,
@@ -71,8 +71,8 @@ func DefaultConfig() *Config {
 	}
 }
 
-func LoadFromEnv() *Config {
-	cfg := DefaultConfig()
+func (c *Config) LoadFromEnv() *Config {
+	cfg := c.DefaultConfig()
 
 	if url := os.Getenv("NATS_URL"); url != "" {
 		cfg.NATSURL = url
