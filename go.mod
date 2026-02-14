@@ -1,4 +1,4 @@
-module NATS_TIRE_LIBRARY
+module github.com/delete-ui/NATS_TIRE_LIBRARY
 
 go 1.25.4
 
